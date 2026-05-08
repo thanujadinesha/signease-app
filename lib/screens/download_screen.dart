@@ -31,6 +31,7 @@ class _DownloadScreenState extends State<DownloadScreen>
     with TickerProviderStateMixin {
   bool _generating = false;
   Uint8List? _generatedBytes;
+  String? _genError;
   late final AnimationController _pulseCtrl;
   late final Animation<double> _pulseAnim;
   late final AnimationController _confettiCtrl;
@@ -98,10 +99,12 @@ class _DownloadScreenState extends State<DownloadScreen>
     final doc = provider.document;
     final sig = provider.signature;
     if (doc == null || sig?.imageBytes == null) return;
+    final docName = doc.name;
 
     setState(() => _generating = true);
 
     Uint8List? output;
+    String? error;
     try {
       if (doc.type == DocumentType.image) {
         output = await _compositeImage(doc, sig!);
@@ -110,13 +113,12 @@ class _DownloadScreenState extends State<DownloadScreen>
       }
     } catch (e) {
       debugPrint('Generation error: $e');
+      error = 'Failed to generate document: $e';
     }
 
     if (output != null) {
       // Record the signature usage against the user's quota
       try {
-        final docName =
-            context.read<SignProvider>().document?.name ?? 'document';
         await ApiService.instance.recordSignature(docName);
         if (mounted) {
           await context.read<AuthProvider>().refreshProfile();
@@ -130,6 +132,7 @@ class _DownloadScreenState extends State<DownloadScreen>
       setState(() {
         _generating = false;
         _generatedBytes = output;
+        _genError = error;
       });
     }
   }
@@ -335,6 +338,23 @@ class _DownloadScreenState extends State<DownloadScreen>
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      // Generation error
+                      if (_genError != null)
+                        Container(
+                          width: double.infinity,
+                          margin: const EdgeInsets.only(bottom: 12),
+                          padding: const EdgeInsets.all(14),
+                          decoration: BoxDecoration(
+                            color: AppColors.danger.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: AppColors.danger.withValues(alpha: 0.3)),
+                          ),
+                          child: Text(
+                            _genError!,
+                            style: const TextStyle(color: AppColors.danger, fontSize: 13, height: 1.4),
+                          ),
+                        ),
+
                       // Success hero
                       _SuccessHero(
                         docName: docName,

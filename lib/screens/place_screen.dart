@@ -52,6 +52,9 @@ class _PlaceScreenState extends State<PlaceScreen> {
   double _containerWidth = 0;
   double _containerHeight = 0;
 
+  bool _loadingDoc = false;
+  String? _loadError;
+
   @override
   void initState() {
     super.initState();
@@ -67,14 +70,18 @@ class _PlaceScreenState extends State<PlaceScreen> {
     final doc = provider.document;
     if (doc == null || doc.fileBytes == null) return;
 
-    if (doc.type == DocumentType.pdf) {
-      await _loadPdfPage(doc.fileBytes!, _currentPage);
-    } else {
-      // Image document
-      setState(() {
-        _pageImageBytes = doc.fileBytes;
-      });
-      await _decodeDimensions(doc.fileBytes!);
+    setState(() { _loadingDoc = true; _loadError = null; });
+    try {
+      if (doc.type == DocumentType.pdf) {
+        await _loadPdfPage(doc.fileBytes!, _currentPage);
+      } else {
+        setState(() { _pageImageBytes = doc.fileBytes; });
+        await _decodeDimensions(doc.fileBytes!);
+      }
+    } catch (e) {
+      if (mounted) setState(() => _loadError = 'Failed to load document: $e');
+    } finally {
+      if (mounted) setState(() => _loadingDoc = false);
     }
   }
 
@@ -93,7 +100,7 @@ class _PlaceScreenState extends State<PlaceScreen> {
     await page.close();
     await pdfDoc.close();
 
-    if (pageImage == null) return;
+    if (pageImage == null) throw Exception('Page rendered as null');
 
     final imgBytes = pageImage.bytes;
     final imgW = pageImage.width?.toDouble() ?? 0;
@@ -128,6 +135,7 @@ class _PlaceScreenState extends State<PlaceScreen> {
     setState(() {
       _currentPage = next;
       _pageImageBytes = null;
+      _loadError = null;
     });
     _loadCurrentPage();
   }
@@ -207,7 +215,19 @@ class _PlaceScreenState extends State<PlaceScreen> {
   // Finalize (limit check)
   // ---------------------------------------------------------------------------
   Future<void> _onFinalize() async {
-    final allowed = await ApiService.instance.canSign();
+    bool allowed;
+    try {
+      allowed = await ApiService.instance.canSign();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Could not check signing limit: $e'),
+          backgroundColor: AppColors.danger,
+        ),
+      );
+      return;
+    }
     if (!mounted) return;
 
     if (!allowed) {
@@ -269,19 +289,42 @@ class _PlaceScreenState extends State<PlaceScreen> {
           ),
           // Document viewport
           Expanded(
-            child: Container(
-              color: AppColors.docViewport,
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(16),
-                child: Center(
-                  child: LayoutBuilder(
-                    builder: (ctx, constraints) {
-                      return _buildDocContainer(
-                          constraints, placement, sig, provider);
-                    },
+            child: Stack(
+              children: [
+                Container(
+                  color: AppColors.docViewport,
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.all(16),
+                    child: Center(
+                      child: LayoutBuilder(
+                        builder: (ctx, constraints) {
+                          return _buildDocContainer(
+                              constraints, placement, sig, provider);
+                        },
+                      ),
+                    ),
                   ),
                 ),
-              ),
+                if (_loadingDoc)
+                  const Center(child: CircularProgressIndicator(color: AppColors.accent)),
+                if (_loadError != null)
+                  Center(
+                    child: Container(
+                      margin: const EdgeInsets.all(24),
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: AppColors.danger.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: AppColors.danger.withValues(alpha: 0.3)),
+                      ),
+                      child: Text(
+                        _loadError!,
+                        style: const TextStyle(color: AppColors.danger, fontSize: 13),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  ),
+              ],
             ),
           ),
           // Controls panel
