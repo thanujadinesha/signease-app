@@ -26,8 +26,8 @@ class _SignatureScreenState extends State<SignatureScreen> {
   SignatureMode _mode = SignatureMode.draw;
 
   // Draw mode state
-  final List<List<Offset>> _strokes = [];
-  List<Offset> _currentStroke = [];
+  final List<List<_Point>> _strokes = [];
+  List<_Point> _currentStroke = [];
   bool _hasDrawing = false;
 
   // Text mode state
@@ -69,7 +69,7 @@ class _SignatureScreenState extends State<SignatureScreen> {
   Future<Uint8List> _exportCanvas(Size size) async {
     final recorder = ui.PictureRecorder();
     final canvas = Canvas(recorder);
-    final painter = _SignaturePainter(strokes: _strokes);
+    final painter = _SignaturePainter(strokes: _strokes, current: const []);
     painter.paint(canvas, size);
     final picture = recorder.endRecording();
     final img = await picture.toImage(size.width.toInt(), size.height.toInt());
@@ -138,6 +138,8 @@ class _SignatureScreenState extends State<SignatureScreen> {
       _previewBytes = null;
     });
   }
+
+
 
   Future<void> _pickUploadImage() async {
     final result = await FilePicker.platform.pickFiles(
@@ -299,19 +301,19 @@ class _SignatureScreenState extends State<SignatureScreen> {
                   ),
                 ),
               ),
-              // 2. Drawing canvas — transparent background so strokes are visible
-              GestureDetector(
-                onPanStart: (d) {
+              // 2. Drawing canvas — Listener handles all pointer kinds (touch + Apple Pencil)
+              Listener(
+                onPointerDown: (e) {
                   setState(() {
-                    _currentStroke = [d.localPosition];
+                    _currentStroke = [_Point(e.localPosition, e.pressure)];
                   });
                 },
-                onPanUpdate: (d) {
+                onPointerMove: (e) {
                   setState(() {
-                    _currentStroke.add(d.localPosition);
+                    _currentStroke.add(_Point(e.localPosition, e.pressure));
                   });
                 },
-                onPanEnd: (_) {
+                onPointerUp: (_) {
                   if (_currentStroke.isNotEmpty) {
                     setState(() {
                       _strokes.add(List.from(_currentStroke));
@@ -324,9 +326,13 @@ class _SignatureScreenState extends State<SignatureScreen> {
                     });
                   }
                 },
+                onPointerCancel: (_) {
+                  setState(() => _currentStroke = []);
+                },
                 child: CustomPaint(
                   painter: _SignaturePainter(
-                    strokes: [..._strokes, _currentStroke],
+                    strokes: _strokes,
+                    current: _currentStroke,
                   ),
                   child: const SizedBox(
                     width: double.infinity,
@@ -807,44 +813,47 @@ class _PreviewStrip extends StatelessWidget {
 }
 
 // ---------------------------------------------------------------------------
-// Canvas painter
+// Point with pressure (Apple Pencil gives 0.0–1.0; touch defaults to 0.5)
+// ---------------------------------------------------------------------------
+class _Point {
+  final Offset offset;
+  final double pressure;
+  const _Point(this.offset, this.pressure);
+}
+
+// ---------------------------------------------------------------------------
+// Canvas painter — pressure-aware stroke width
 // ---------------------------------------------------------------------------
 class _SignaturePainter extends CustomPainter {
-  final List<List<Offset>> strokes;
+  final List<List<_Point>> strokes;
+  final List<_Point> current;
 
-  const _SignaturePainter({required this.strokes});
+  const _SignaturePainter({required this.strokes, required this.current});
 
   @override
   void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = AppColors.ink
-      ..strokeWidth = 2.8
-      ..strokeCap = StrokeCap.round
-      ..strokeJoin = StrokeJoin.round
-      ..style = PaintingStyle.stroke;
-
-    for (final stroke in strokes) {
+    for (final stroke in [...strokes, current]) {
       if (stroke.isEmpty) continue;
-      final path = Path();
-      path.moveTo(stroke.first.dx, stroke.first.dy);
+      _drawStroke(canvas, stroke);
+    }
+  }
 
-      for (int i = 1; i < stroke.length - 1; i++) {
-        final mid = Offset(
-          (stroke[i].dx + stroke[i + 1].dx) / 2,
-          (stroke[i].dy + stroke[i + 1].dy) / 2,
-        );
-        path.quadraticBezierTo(
-            stroke[i].dx, stroke[i].dy, mid.dx, mid.dy);
-      }
-
-      if (stroke.length > 1) {
-        path.lineTo(stroke.last.dx, stroke.last.dy);
-      }
-
-      canvas.drawPath(path, paint);
+  void _drawStroke(Canvas canvas, List<_Point> stroke) {
+    for (int i = 0; i < stroke.length - 1; i++) {
+      final p = stroke[i];
+      final q = stroke[i + 1];
+      final pressure = (p.pressure > 0 ? p.pressure : 0.5).clamp(0.2, 1.0);
+      final paint = Paint()
+        ..color = AppColors.ink
+        ..strokeWidth = (1.5 + pressure * 3.0)
+        ..strokeCap = StrokeCap.round
+        ..strokeJoin = StrokeJoin.round
+        ..style = PaintingStyle.stroke;
+      canvas.drawLine(p.offset, q.offset, paint);
     }
   }
 
   @override
-  bool shouldRepaint(_SignaturePainter old) => old.strokes != strokes;
+  bool shouldRepaint(_SignaturePainter old) =>
+      old.strokes != strokes || old.current != current;
 }
