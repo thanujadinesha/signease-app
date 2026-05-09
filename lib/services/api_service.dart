@@ -171,4 +171,17 @@ class ApiService {
     if (res.statusCode == 403) throw LimitReachedException();
     await _handleResponse(res);
   }
+
+  // ── Billing ────────────────────────────────────────────────────────────────
+
+  /// Returns the Stripe Checkout URL for the given plan.
+  Future<String> createCheckoutSession(String plan) async {
+    final res = await http.post(
+      _uri('/api/billing/checkout'),
+      headers: await _headers(auth: true),
+      body: json.encode({'plan': plan}),
+    );
+    final data = await _handleResponse(res);
+    return data['url'] as String;
+  }
 }
