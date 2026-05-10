@@ -19,11 +19,11 @@ void main() {
     statusBarBrightness: Brightness.dark,
     statusBarIconBrightness: Brightness.light,
   ));
-  runApp(const SignEaseApp());
+  runApp(const iSignerApp());
 }
 
-class SignEaseApp extends StatelessWidget {
-  const SignEaseApp({super.key});
+class iSignerApp extends StatelessWidget {
+  const iSignerApp({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -33,7 +33,7 @@ class SignEaseApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => SignProvider()),
       ],
       child: MaterialApp(
-        title: 'SignEase',
+        title: 'iSigner',
         debugShowCheckedModeBanner: false,
         theme: AppTheme.theme,
         home: const _AuthGate(),

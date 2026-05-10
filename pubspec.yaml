@@ -1,5 +1,5 @@
 name: signease_app
-description: SignEase — Mobile Document Signing App
+description: iSigner — Mobile Document Signing App
 publish_to: 'none'
 version: 1.0.0+1
 
@@ -49,3 +49,7 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+
+  assets:
+    - assets/images/isigner_logo.png
+    - assets/images/isigner_icon.png

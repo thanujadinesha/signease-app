@@ -7,7 +7,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
-	<string>Signease App</string>
+	<string>iSigner</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -50,9 +50,9 @@
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>SignEase needs access to your photo library to upload signature images.</string>
+	<string>iSigner needs access to your photo library to upload signature images.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
-	<string>SignEase needs access to save your signed document to your photo library.</string>
+	<string>iSigner needs access to save your signed document to your photo library.</string>
 	<key>UIFileSharingEnabled</key>
 	<true/>
 	<key>LSSupportsOpeningDocumentsInPlace</key>

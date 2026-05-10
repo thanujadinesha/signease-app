@@ -36,53 +36,20 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
           child: Row(
             children: [
-              // Logo mark
-              Container(
-                width: 36,
-                height: 36,
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [AppColors.accent, Color(0xFF6D28D9)],
-                  ),
-                  borderRadius: BorderRadius.circular(10),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.accentGlow,
-                      blurRadius: 20,
-                    ),
-                  ],
-                ),
-                child: const Icon(
-                  Icons.edit_document,
-                  color: Colors.white,
-                  size: 18,
-                ),
+              // Logo
+              Image.asset(
+                'assets/images/isigner_logo.png',
+                height: 32,
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      'SignEase',
-                      style: GoogleFonts.dmSerifDisplay(
-                        fontSize: 17,
-                        color: AppColors.text,
-                        letterSpacing: -0.3,
-                      ),
-                    ),
-                    Text(
-                      tagline,
-                      style: const TextStyle(
-                        fontSize: 10,
-                        color: AppColors.text2,
-                        fontWeight: FontWeight.w300,
-                      ),
-                    ),
-                  ],
+                child: Text(
+                  tagline,
+                  style: const TextStyle(
+                    fontSize: 10,
+                    color: AppColors.text2,
+                    fontWeight: FontWeight.w300,
+                  ),
                 ),
               ),
               if (trailing != null) trailing!,

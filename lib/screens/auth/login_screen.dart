@@ -70,48 +70,9 @@ class _LoginScreenState extends State<LoginScreen> {
                     const SizedBox(height: 60),
 
                     // Logo
-                    Row(
-                      children: [
-                        Container(
-                          width: 48,
-                          height: 48,
-                          decoration: BoxDecoration(
-                            gradient: const LinearGradient(
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                              colors: [AppColors.accent, Color(0xFF6D28D9)],
-                            ),
-                            borderRadius: BorderRadius.circular(14),
-                            boxShadow: [
-                              BoxShadow(
-                                  color: AppColors.accentGlow, blurRadius: 24),
-                            ],
-                          ),
-                          child: const Icon(Icons.edit_document,
-                              color: Colors.white, size: 24),
-                        ),
-                        const SizedBox(width: 14),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'SignEase',
-                              style: GoogleFonts.dmSerifDisplay(
-                                fontSize: 24,
-                                color: AppColors.text,
-                                letterSpacing: -0.3,
-                              ),
-                            ),
-                            const Text(
-                              'Mobile Document Signing',
-                              style: TextStyle(
-                                  fontSize: 11,
-                                  color: AppColors.text2,
-                                  fontWeight: FontWeight.w300),
-                            ),
-                          ],
-                        ),
-                      ],
+                    Image.asset(
+                      'assets/images/isigner_logo.png',
+                      height: 52,
                     ),
 
                     const SizedBox(height: 48),

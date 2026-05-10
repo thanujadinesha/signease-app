@@ -296,7 +296,7 @@ class _DownloadScreenState extends State<DownloadScreen>
       await Share.shareXFiles(
         [xFile],
         subject: 'Signed Document',
-        text: '$fileName — signed via SignEase',
+        text: '$fileName — signed via iSigner',
       );
     } catch (e) {
       debugPrint('Share error: $e');
